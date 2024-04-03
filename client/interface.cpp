@@ -1,38 +1,38 @@
 #include "interface.h"
 #include "ui_interface.h"
 
-QScopedPointer<QFile> m_logFile;
-QString logLvl;
+QScopedPointer<QFile> g_logFile;
+QString g_logLvl;
 
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    QTextStream out(m_logFile.data());
+    QTextStream out(g_logFile.data());
 
     switch (type)
     {
     case QtInfoMsg:
-        if (logLvl.contains('1'))
+        if (g_logLvl.contains('1'))
         {
             out << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz ")
                 << "INF "<< context.category << ": "<< msg << endl;
         }
         break;
     case QtDebugMsg:
-        if (logLvl.contains('2'))
+        if (g_logLvl.contains('2'))
         {
             out << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz ")
                 << "DBG "<< context.category << ": "<< msg << endl;
         }
         break;
     case QtWarningMsg:
-        if (logLvl.contains('3'))
+        if (g_logLvl.contains('3'))
         {
             out << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz ")
                 << "WRN "<< context.category << ": "<< msg << endl;
         }
         break;
     case QtCriticalMsg:
-        if (logLvl.contains('4'))
+        if (g_logLvl.contains('4'))
         {
             out << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz ")
                 << "CRT "<< context.category << ": "<< msg << endl;
@@ -59,27 +59,27 @@ TInterface::TInterface(QWidget *parent)
 
 TInterface::~TInterface()
 {
-    amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
-    amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
-    amqp_destroy_connection(conn);
+    amqp_channel_close(m_conn, 1, AMQP_REPLY_SUCCESS);
+    amqp_connection_close(m_conn, AMQP_REPLY_SUCCESS);
+    amqp_destroy_connection(m_conn);
     delete ui;
 }
 
 int TInterface::connectRabbit()
 {
-    if (socket != NULL)
+    if (m_socket != NULL)
     {
-        amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
-        amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
-        amqp_destroy_connection(conn);
-        socket = NULL;
+        amqp_channel_close(m_conn, 1, AMQP_REPLY_SUCCESS);
+        amqp_connection_close(m_conn, AMQP_REPLY_SUCCESS);
+        amqp_destroy_connection(m_conn);
+        m_socket = NULL;
     }
 
     QSettings settings(QString("settings.ini"),QSettings::IniFormat);
     QString logPath = settings.value("Logging/logPath").toString();
-    m_logFile.reset(new QFile(logPath));
-    m_logFile.data()->open(QFile::Append | QFile::Text);
-    logLvl = settings.value("Logging/logLevel").toString();
+    g_logFile.reset(new QFile(logPath));
+    g_logFile.data()->open(QFile::Append | QFile::Text);
+    g_logLvl = settings.value("Logging/logLevel").toString();
     qInstallMessageHandler(messageHandler);
 
     QString strBuf = settings.value("Network/hostname").toString();
@@ -89,10 +89,10 @@ int TInterface::connectRabbit()
 
     int status;
 
-    conn = amqp_new_connection();
+    m_conn = amqp_new_connection();
 
-    socket = amqp_tcp_socket_new(conn);
-    if (socket)
+    m_socket = amqp_tcp_socket_new(m_conn);
+    if (m_socket)
     {
         qInfo(logInfo()) << "Create TCP socket";
     }
@@ -102,7 +102,7 @@ int TInterface::connectRabbit()
         return 1;
     }
 
-    status = amqp_socket_open(socket, hostname, port);
+    status = amqp_socket_open(m_socket, hostname, port);
     if (status == AMQP_STATUS_OK)
     {
         qInfo(logInfo()) << "Open TCP socket";
@@ -113,7 +113,7 @@ int TInterface::connectRabbit()
         return 2;
     }
 
-    status = amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN,"guest", "guest").reply_type;
+    status = amqp_login(m_conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN,"guest", "guest").reply_type;
     if (status == AMQP_RESPONSE_NORMAL)
     {
         qInfo(logInfo()) << "Login to the broker";
@@ -129,8 +129,8 @@ int TInterface::connectRabbit()
         return 32;
     }
 
-    amqp_channel_open(conn, 1);
-    status = amqp_get_rpc_reply(conn).reply_type;
+    amqp_channel_open(m_conn, 1);
+    status = amqp_get_rpc_reply(m_conn).reply_type;
     if (status == AMQP_RESPONSE_NORMAL)
     {
         qInfo(logInfo()) << "Open channel";
@@ -146,8 +146,8 @@ int TInterface::connectRabbit()
         return 42;
     }
 
-    amqp_queue_declare_ok_t *r = amqp_queue_declare( conn, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
-    status = amqp_get_rpc_reply(conn).reply_type;
+    amqp_queue_declare_ok_t *r = amqp_queue_declare( m_conn, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
+    status = amqp_get_rpc_reply(m_conn).reply_type;
     if (status == AMQP_RESPONSE_NORMAL)
     {
         qInfo(logInfo()) << "Declare queue";
@@ -163,8 +163,8 @@ int TInterface::connectRabbit()
         return 52;
     }
 
-    reply_to_queue = amqp_bytes_malloc_dup(r->queue);
-    if (reply_to_queue.bytes == NULL)
+    m_reply_to_queue = amqp_bytes_malloc_dup(r->queue);
+    if (m_reply_to_queue.bytes == NULL)
     {
       qCritical(logCritical()) << "Out of memory while copying queue name";
       return 6;
@@ -177,8 +177,8 @@ void TInterface::sendMessage()
     QSettings settings(QString("settings.ini"),QSettings::IniFormat);
 
     QString logPath = settings.value("Logging/logPath").toString();
-    m_logFile.reset(new QFile(logPath));
-    m_logFile.data()->open(QFile::Append | QFile::Text);
+    g_logFile.reset(new QFile(logPath));
+    g_logFile.data()->open(QFile::Append | QFile::Text);
     QString strBuf = settings.value("Network/routingkey").toString();
     QByteArray byteArray = strBuf.toUtf8();
     char const* routingkey = byteArray.constData();
@@ -189,16 +189,16 @@ void TInterface::sendMessage()
     std::string userID = strBuf3.toStdString();
 
     TestTask::Messages::Request messageRequest;
-    std::string serialized_message;
+    std::string serializedMessage;
     int messagebody;
     messagebody = ui->numberLineEdit->text().toInt();
     messageRequest.set_id(userID);
     messageRequest.set_req(messagebody);
-    messageRequest.SerializeToString(&serialized_message);
+    messageRequest.SerializeToString(&serializedMessage);
 
     amqp_bytes_t result;
-    result.len = serialized_message.size();
-    result.bytes = (void*)serialized_message.c_str();
+    result.len = serializedMessage.size();
+    result.bytes = (void*)serializedMessage.c_str();
 
     amqp_basic_properties_t props;
     props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG | AMQP_BASIC_REPLY_TO_FLAG | AMQP_BASIC_CORRELATION_ID_FLAG;
@@ -206,7 +206,7 @@ void TInterface::sendMessage()
     props.content_type = result;
 
     props.delivery_mode = 2;
-    props.reply_to = amqp_bytes_malloc_dup(reply_to_queue);
+    props.reply_to = amqp_bytes_malloc_dup(m_reply_to_queue);
     if (props.reply_to.bytes == NULL)
     {
         qCritical(logCritical()) << "Out of memory while copying queue name";
@@ -214,7 +214,7 @@ void TInterface::sendMessage()
 
     props.correlation_id = amqp_cstring_bytes(routingkey);
 
-    if(amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange), amqp_cstring_bytes(routingkey), 0, 0, &props, result) != AMQP_STATUS_OK)
+    if(amqp_basic_publish(m_conn, 1, amqp_cstring_bytes(exchange), amqp_cstring_bytes(routingkey), 0, 0, &props, result) != AMQP_STATUS_OK)
     {
         qWarning(logWarning()) << "Failed when publish message";
     }
@@ -224,9 +224,9 @@ void TInterface::sendMessage()
     }
     amqp_bytes_free(props.reply_to);
 
-    amqp_basic_consume(conn, 1, reply_to_queue, amqp_empty_bytes, 0, 1, 0,
+    amqp_basic_consume(m_conn, 1, m_reply_to_queue, amqp_empty_bytes, 0, 1, 0,
                        amqp_empty_table);
-    int status = amqp_get_rpc_reply(conn).reply_type;
+    int status = amqp_get_rpc_reply(m_conn).reply_type;
     if (status == AMQP_RESPONSE_SERVER_EXCEPTION)
     {
         qCritical(logCritical()) << "Failed when consume: The broker returned an exception";
@@ -240,7 +240,7 @@ void TInterface::sendMessage()
 void TInterface::consumeMessage()
 {
     TestTask::Messages::Response messageResponse;
-    std::string serialized_message;
+    std::string serializedMessage;
     amqp_basic_properties_t props;
     props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG | AMQP_BASIC_REPLY_TO_FLAG | AMQP_BASIC_CORRELATION_ID_FLAG;
     amqp_rpc_reply_t res;
@@ -249,12 +249,12 @@ void TInterface::consumeMessage()
     timeout.tv_sec = 3;
     timeout.tv_usec = 0;
 
-    amqp_maybe_release_buffers(conn);
-    res = amqp_consume_message(conn, &envelope, &timeout, 0);
+    amqp_maybe_release_buffers(m_conn);
+    res = amqp_consume_message(m_conn, &envelope, &timeout, 0);
     if (res.reply_type == AMQP_RESPONSE_NORMAL)
     {
-        serialized_message = std::string((char*)envelope.message.properties.content_type.bytes,envelope.message.properties.content_type.len);
-        messageResponse.ParseFromString(serialized_message);
+        serializedMessage = std::string((char*)envelope.message.properties.content_type.bytes,envelope.message.properties.content_type.len);
+        messageResponse.ParseFromString(serializedMessage);
         ui->outputLabel->setText(QString::number(messageResponse.res()));
         qDebug(logDebug()) << "Number" << messageResponse.res() << "is consume";
     }
@@ -275,6 +275,6 @@ void TInterface::on_SendNumberBtn_clicked()
 
 void TInterface::on_settingsMenuBtn_triggered()
 {
-    settingsMenu.show();
+    m_settingsMenu.show();
 }
 

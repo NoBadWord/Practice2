@@ -1,19 +1,19 @@
 #ifndef TINTERFACE_H
 #define TINTERFACE_H
 
-#include <QMainWindow>
 #include <settingsmenu.h>
-#include <amqp.h>
-#include <amqp_tcp_socket.h>
 #include "proto_file.pb.h"
+#include "LoggingCategories.h"
 
+#include <QMainWindow>
 #include <QSettings>
 #include <QDateTime>
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
 
-#include "LoggingCategories.h"
+#include <amqp.h>
+#include <amqp_tcp_socket.h>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class TInterface; }
@@ -34,10 +34,10 @@ private slots:
 
 private:
     Ui::TInterface *ui;
-    TSettingsMenu settingsMenu;
-    amqp_socket_t *socket = NULL;
-    amqp_connection_state_t conn;
-    amqp_bytes_t reply_to_queue;
+    TSettingsMenu m_settingsMenu;
+    amqp_socket_t *m_socket = NULL;
+    amqp_connection_state_t m_conn;
+    amqp_bytes_t m_reply_to_queue;
 
     void sendMessage();
     void consumeMessage();

@@ -1,8 +1,7 @@
 #ifndef TSERVER_H
 #define TSERVER_H
 
-#include <amqp.h>
-#include <amqp_tcp_socket.h>
+#include "LoggingCategories.h"
 #include "proto_file.pb.h"
 
 #include <QSettings>
@@ -11,14 +10,14 @@
 #include <QTextStream>
 #include <QDebug>
 
-#include "LoggingCategories.h"
+#include <amqp.h>
+#include <amqp_tcp_socket.h>
 
 class TServer
 {
 private:
-    amqp_socket_t *socket = NULL;
-    amqp_connection_state_t conn;
-    //amqp_envelope_t envelope;
+    amqp_socket_t *m_socket = NULL;
+    amqp_connection_state_t m_conn;
 public:
     TServer();
     ~TServer();
