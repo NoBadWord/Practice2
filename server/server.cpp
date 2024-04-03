@@ -222,7 +222,7 @@ void TServer::consumeAndSendMessage()
     res = amqp_consume_message(conn, &envelope, NULL, 0);
     if (res.reply_type != AMQP_RESPONSE_NORMAL)
     {
-        qWarning(logWarning()) << "Failed when consume message";
+        qCritical(logCritical()) << "Failed when consume message";
     }
 
     serialized_message = std::string((char*)envelope.message.properties.content_type.bytes,envelope.message.properties.content_type.len);
@@ -245,7 +245,7 @@ void TServer::consumeAndSendMessage()
 
     if (amqp_basic_publish(conn,1,amqp_empty_bytes,amqp_cstring_bytes((char *)envelope.message.properties.reply_to.bytes),0,0,&props, result) != AMQP_STATUS_OK)
     {
-        qWarning(logWarning()) << "Failed when publish message";
+        qCritical(logCritical()) << "Failed when publish message";
     }
     else
     {
