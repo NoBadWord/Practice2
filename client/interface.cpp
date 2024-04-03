@@ -53,8 +53,6 @@ TInterface::TInterface(QWidget *parent)
 {
     ui->setupUi(this);
     this->setWindowTitle(QString("Удвоение через брокер"));
-    //connectRabbit();
-
 }
 
 TInterface::~TInterface()
@@ -75,7 +73,7 @@ int TInterface::connectRabbit()
         m_socket = NULL;
     }
 
-    QSettings settings(QString("settings.ini"),QSettings::IniFormat);
+    QSettings settings(QString("settings.ini"), QSettings::IniFormat);
     QString logPath = settings.value("Logging/logPath").toString();
     g_logFile.reset(new QFile(logPath));
     g_logFile.data()->open(QFile::Append | QFile::Text);
@@ -90,7 +88,6 @@ int TInterface::connectRabbit()
     int status;
 
     m_conn = amqp_new_connection();
-
     m_socket = amqp_tcp_socket_new(m_conn);
     if (m_socket)
     {
@@ -146,7 +143,7 @@ int TInterface::connectRabbit()
         return 42;
     }
 
-    amqp_queue_declare_ok_t *r = amqp_queue_declare( m_conn, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
+    amqp_queue_declare_ok_t *r = amqp_queue_declare(m_conn, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
     status = amqp_get_rpc_reply(m_conn).reply_type;
     if (status == AMQP_RESPONSE_NORMAL)
     {
@@ -203,7 +200,7 @@ void TInterface::sendMessage()
     amqp_basic_properties_t props;
     props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG | AMQP_BASIC_REPLY_TO_FLAG | AMQP_BASIC_CORRELATION_ID_FLAG;
 
-    props.content_type = result;
+    props.content_type = amqp_cstring_bytes("number");
 
     props.delivery_mode = 2;
     props.reply_to = amqp_bytes_malloc_dup(m_reply_to_queue);
@@ -224,8 +221,7 @@ void TInterface::sendMessage()
     }
     amqp_bytes_free(props.reply_to);
 
-    amqp_basic_consume(m_conn, 1, m_reply_to_queue, amqp_empty_bytes, 0, 1, 0,
-                       amqp_empty_table);
+    amqp_basic_consume(m_conn, 1, m_reply_to_queue, amqp_empty_bytes, 0, 1, 0, amqp_empty_table);
     int status = amqp_get_rpc_reply(m_conn).reply_type;
     if (status == AMQP_RESPONSE_SERVER_EXCEPTION)
     {
@@ -253,7 +249,7 @@ void TInterface::consumeMessage()
     res = amqp_consume_message(m_conn, &envelope, &timeout, 0);
     if (res.reply_type == AMQP_RESPONSE_NORMAL)
     {
-        serializedMessage = std::string((char*)envelope.message.properties.content_type.bytes,envelope.message.properties.content_type.len);
+        serializedMessage = std::string((char*)envelope.message.body.bytes, envelope.message.body.len);
         messageResponse.ParseFromString(serializedMessage);
         ui->outputLabel->setText(QString::number(messageResponse.res()));
         qDebug(logDebug()) << "Number" << messageResponse.res() << "is consume";

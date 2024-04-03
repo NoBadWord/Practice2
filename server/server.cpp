@@ -5,7 +5,6 @@ QString g_logLvl;
 
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-
     QTextStream out(g_logFile.data());
 
     switch (type)
@@ -115,7 +114,7 @@ int TServer::connectRabbit()
         return 2;
     }
 
-    status = amqp_login(m_conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN,"guest", "guest").reply_type;
+    status = amqp_login(m_conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, "guest", "guest").reply_type;
     if (status == AMQP_RESPONSE_NORMAL)
     {
         qInfo(logInfo()) << "Login to the broker";
@@ -224,7 +223,7 @@ void TServer::consumeAndSendMessage()
         qCritical(logCritical()) << "Failed when consume message";
     }
 
-    serializedMessage = std::string((char*)envelope.message.properties.content_type.bytes,envelope.message.properties.content_type.len);
+    serializedMessage = std::string((char*)envelope.message.body.bytes, envelope.message.body.len);
     messageRequest.ParseFromString(serializedMessage);
     qDebug(logDebug()) <<"Received <<"<<messageRequest.req()<<">> from <<"<<QString::fromStdString(messageRequest.id())<< ">>";
 
@@ -238,7 +237,7 @@ void TServer::consumeAndSendMessage()
 
     amqp_basic_properties_t props;
     props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG | AMQP_BASIC_CORRELATION_ID_FLAG;
-    props.content_type = result;
+    props.content_type = amqp_cstring_bytes("number");
 
     props.delivery_mode = 2;
 

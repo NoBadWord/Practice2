@@ -8,7 +8,6 @@ TSettingsMenu::TSettingsMenu(QWidget *parent) :
     ui->setupUi(this);
     this->setWindowTitle(QString("Настройки"));
 
-
     QSettings settings(QString("settings.ini"),QSettings::IniFormat);
 
     QString logPath = settings.value("Logging/logPath").toString();
