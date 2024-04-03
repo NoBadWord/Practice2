@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-TEST(ConnectionTest, hi)
+TEST(TServer, ConnectionToRabbitMQ)
 {
     TServer server;
     ASSERT_EQ(0,server.connectRabbit());
