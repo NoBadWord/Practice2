@@ -4,4 +4,5 @@ SUBDIRS += \
     LoggingCategories \
     client \
     protobuf \
-    server
+    server \
+    tests

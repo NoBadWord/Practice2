@@ -7,9 +7,7 @@
 
 #include <QMainWindow>
 #include <QSettings>
-#include <QDateTime>
 #include <QFile>
-#include <QTextStream>
 #include <QDebug>
 
 #include <amqp.h>
