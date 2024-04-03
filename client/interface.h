@@ -26,11 +26,10 @@ class TInterface : public QMainWindow
 public:
     TInterface(QWidget *parent = nullptr);
     ~TInterface();
+    int connectRabbit();
 
 private slots:
     void on_SendNumberBtn_clicked();
-
-
     void on_settingsMenuBtn_triggered();
 
 private:
@@ -40,7 +39,6 @@ private:
     amqp_connection_state_t conn;
     amqp_bytes_t reply_to_queue;
 
-    void connectRabbit();
     void sendMessage();
     void consumeMessage();
 };

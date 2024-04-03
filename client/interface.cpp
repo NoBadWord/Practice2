@@ -53,7 +53,7 @@ TInterface::TInterface(QWidget *parent)
 {
     ui->setupUi(this);
     this->setWindowTitle(QString("Удвоение через брокер"));
-    connectRabbit();
+    //connectRabbit();
 
 }
 
@@ -65,10 +65,17 @@ TInterface::~TInterface()
     delete ui;
 }
 
-void TInterface::connectRabbit()
+int TInterface::connectRabbit()
 {
-    QSettings settings(QString("settings.ini"),QSettings::IniFormat);
+    if (socket != NULL)
+    {
+        amqp_channel_close(conn, 1, AMQP_REPLY_SUCCESS);
+        amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
+        amqp_destroy_connection(conn);
+        socket = NULL;
+    }
 
+    QSettings settings(QString("settings.ini"),QSettings::IniFormat);
     QString logPath = settings.value("Logging/logPath").toString();
     m_logFile.reset(new QFile(logPath));
     m_logFile.data()->open(QFile::Append | QFile::Text);
@@ -89,34 +96,80 @@ void TInterface::connectRabbit()
     {
         qInfo(logInfo()) << "Create TCP socket";
     }
+    else
+    {
+        qCritical(logCritical()) << "Failed when creating TCP socket";
+        return 1;
+    }
 
     status = amqp_socket_open(socket, hostname, port);
     if (status == AMQP_STATUS_OK)
     {
         qInfo(logInfo()) << "Open TCP socket";
     }
+    else
+    {
+        qCritical(logCritical()) << "Failed when opening TCP socket";
+        return 2;
+    }
 
-    if (amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN,"guest", "guest").reply_type == AMQP_RESPONSE_NORMAL)
+    status = amqp_login(conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN,"guest", "guest").reply_type;
+    if (status == AMQP_RESPONSE_NORMAL)
     {
         qInfo(logInfo()) << "Login to the broker";
     }
+    else if (status == AMQP_RESPONSE_LIBRARY_EXCEPTION)
+    {
+        qCritical(logCritical()) << "Failed when login to the broker: The broker closed the socket";
+        return 31;
+    }
+    else if (status == AMQP_RESPONSE_SERVER_EXCEPTION)
+    {
+        qCritical(logCritical()) << "Failed when login to the broker: The broker returned an exception";
+        return 32;
+    }
+
     amqp_channel_open(conn, 1);
-    if (amqp_get_rpc_reply(conn).reply_type == AMQP_RESPONSE_NORMAL)
+    status = amqp_get_rpc_reply(conn).reply_type;
+    if (status == AMQP_RESPONSE_NORMAL)
     {
         qInfo(logInfo()) << "Open channel";
     }
+    else if (status == AMQP_RESPONSE_SERVER_EXCEPTION)
+    {
+        qCritical(logCritical()) << "Failed when open chennel: The broker returned an exception";
+        return 41;
+    }
+    else if (status == AMQP_RESPONSE_LIBRARY_EXCEPTION)
+    {
+        qCritical(logCritical()) << "Failed when open chennel: An exception occurred within the library";
+        return 42;
+    }
 
-    amqp_queue_declare_ok_t *r = amqp_queue_declare(
-            conn, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
-    if (amqp_get_rpc_reply(conn).reply_type == AMQP_RESPONSE_NORMAL)
+    amqp_queue_declare_ok_t *r = amqp_queue_declare( conn, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
+    status = amqp_get_rpc_reply(conn).reply_type;
+    if (status == AMQP_RESPONSE_NORMAL)
     {
         qInfo(logInfo()) << "Declare queue";
     }
+    else if (status == AMQP_RESPONSE_SERVER_EXCEPTION)
+    {
+        qCritical(logCritical()) << "Failed when declare queue: The broker returned an exception";
+        return 51;
+    }
+    else if (status == AMQP_RESPONSE_LIBRARY_EXCEPTION)
+    {
+        qCritical(logCritical()) << "Failed when declare queue: An exception occurred within the library";
+        return 52;
+    }
+
     reply_to_queue = amqp_bytes_malloc_dup(r->queue);
     if (reply_to_queue.bytes == NULL)
     {
       qCritical(logCritical()) << "Out of memory while copying queue name";
+      return 6;
     }
+    return 0;
 }
 
 void TInterface::sendMessage()
@@ -161,7 +214,11 @@ void TInterface::sendMessage()
 
     props.correlation_id = amqp_cstring_bytes(routingkey);
 
-    if(amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange), amqp_cstring_bytes(routingkey), 0, 0, &props, result) == AMQP_STATUS_OK)
+    if(amqp_basic_publish(conn, 1, amqp_cstring_bytes(exchange), amqp_cstring_bytes(routingkey), 0, 0, &props, result) != AMQP_STATUS_OK)
+    {
+        qWarning(logWarning()) << "Failed when publish message";
+    }
+    else
     {
         qDebug(logDebug()) << "Number" << messageRequest.req() << "is publish";
     }
@@ -169,7 +226,15 @@ void TInterface::sendMessage()
 
     amqp_basic_consume(conn, 1, reply_to_queue, amqp_empty_bytes, 0, 1, 0,
                        amqp_empty_table);
-    amqp_get_rpc_reply(conn);
+    int status = amqp_get_rpc_reply(conn).reply_type;
+    if (status == AMQP_RESPONSE_SERVER_EXCEPTION)
+    {
+        qCritical(logCritical()) << "Failed when consume: The broker returned an exception";
+    }
+    else if (status == AMQP_RESPONSE_LIBRARY_EXCEPTION)
+    {
+        qCritical(logCritical()) << "Failed when consume: An exception occurred within the library";
+    }
 }
 
 void TInterface::consumeMessage()
@@ -186,7 +251,6 @@ void TInterface::consumeMessage()
 
     amqp_maybe_release_buffers(conn);
     res = amqp_consume_message(conn, &envelope, &timeout, 0);
-
     if (res.reply_type == AMQP_RESPONSE_NORMAL)
     {
         serialized_message = std::string((char*)envelope.message.properties.content_type.bytes,envelope.message.properties.content_type.len);
