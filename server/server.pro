@@ -9,6 +9,7 @@ CONFIG -= app_bundle
 
 LIBS += -lrabbitmq
 LIBS += -lprotobuf
+LIBS += -lgtest
 
 INCLUDEPATH += ../LoggingCategories
 INCLUDEPATH += ../protobuf

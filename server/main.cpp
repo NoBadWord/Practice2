@@ -1,11 +1,23 @@
 #include "server.h"
 
-int main() {
+#include <gtest/gtest.h>
 
+TEST(ConnectionTest, hi)
+{
+    TServer server;
+    ASSERT_EQ(0,server.connectRabbit());
+}
+
+int main() {
+    testing::InitGoogleTest();
+    if(RUN_ALL_TESTS())
+    {
+        return 1;
+    }
     TServer server;
     if (server.connectRabbit())
     {
-        return 1;
+        return 2;
     }
     for(;;)
     {
