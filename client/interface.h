@@ -1,7 +1,7 @@
 #ifndef TINTERFACE_H
 #define TINTERFACE_H
 
-#include <settingsmenu.h>
+#include "settingsmenu.h"
 #include "proto_file.pb.h"
 #include "LoggingCategories.h"
 
