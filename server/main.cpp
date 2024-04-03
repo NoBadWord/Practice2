@@ -5,7 +5,7 @@
 TEST(TServer, ConnectionToRabbitMQ)
 {
     TServer server;
-    ASSERT_EQ(0,server.connectRabbit());
+    ASSERT_EQ(0, server.connectRabbit());
 }
 
 int main() {
