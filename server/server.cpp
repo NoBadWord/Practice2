@@ -15,14 +15,50 @@ TServer::~TServer()
     amqp_destroy_connection(m_conn);
 }
 
+void TServer::disconnectRabbit()
+{
+    amqp_channel_close(m_conn, 1, AMQP_REPLY_SUCCESS);
+    amqp_connection_close(m_conn, AMQP_REPLY_SUCCESS);
+    amqp_destroy_connection(m_conn);
+    m_socket = NULL;
+}
+
+int TServer::createSocket()
+{
+    m_socket = amqp_tcp_socket_new(m_conn);
+    if (m_socket)
+    {
+        qInfo(logInfo()) << "Create TCP socket";
+    }
+    else
+    {
+        qCritical(logCritical()) << "Failed when creating TCP socket";
+        return 1;
+    }
+    return 0;
+}
+
+int TServer::openSocket(const char* host, int port)
+{
+    int status;
+    status = amqp_socket_open(m_socket, host, port);
+    if (status == AMQP_STATUS_OK)
+    {
+        qInfo(logInfo()) << "Open TCP socket";
+    }
+    else
+    {
+        qCritical(logCritical()) << "Failed when opening TCP socket";
+        return 1;
+    }
+    return 0;
+}
+
 int TServer::connectRabbit()
 {
     if (m_socket != NULL)
     {
-        amqp_channel_close(m_conn, 1, AMQP_REPLY_SUCCESS);
-        amqp_connection_close(m_conn, AMQP_REPLY_SUCCESS);
-        amqp_destroy_connection(m_conn);
-        m_socket = NULL;
+        disconnectRabbit();
     }
 
     QSettings settings(QString("settings.ini"),QSettings::IniFormat);
@@ -49,27 +85,11 @@ int TServer::connectRabbit()
 
     m_conn = amqp_new_connection();
 
-    m_socket = amqp_tcp_socket_new(m_conn);
-    if (m_socket)
-    {
-        qInfo(logInfo()) << "Create TCP socket";
-    }
-    else
-    {
-        qCritical(logCritical()) << "Failed when creating TCP socket";
+    if (createSocket())
         return 1;
-    }
 
-    status = amqp_socket_open(m_socket, hostname, port);
-    if (status == AMQP_STATUS_OK)
-    {
-        qInfo(logInfo()) << "Open TCP socket";
-    }
-    else
-    {
-        qCritical(logCritical()) << "Failed when opening TCP socket";
+    if (openSocket(hostname, port))
         return 2;
-    }
 
     status = amqp_login(m_conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, "guest", "guest").reply_type;
     if (status == AMQP_RESPONSE_NORMAL)
@@ -87,6 +107,7 @@ int TServer::connectRabbit()
         return 32;
     }
 
+
     amqp_channel_open(m_conn, 1);
     status = amqp_get_rpc_reply(m_conn).reply_type;
     if (status == AMQP_RESPONSE_NORMAL)
@@ -103,6 +124,7 @@ int TServer::connectRabbit()
         qCritical(logCritical()) << "Failed when open chennel: An exception occurred within the library";
         return 42;
     }
+
 
     amqp_queue_declare_ok_t *r = amqp_queue_declare(m_conn, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
     status = amqp_get_rpc_reply(m_conn).reply_type;
@@ -181,6 +203,7 @@ void TServer::consumeAndSendMessage()
     }
 
     serializedMessage = std::string((char*)envelope.message.body.bytes, envelope.message.body.len);
+
     messageRequest.ParseFromString(serializedMessage);
     qDebug(logDebug()) <<"Received <<"<<messageRequest.req()<<">> from <<"<<QString::fromStdString(messageRequest.id())<< ">>";
 
@@ -209,3 +232,4 @@ void TServer::consumeAndSendMessage()
 
     amqp_destroy_envelope(&envelope);
 }
+
