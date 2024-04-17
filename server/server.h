@@ -3,11 +3,8 @@
 
 #include "LoggingCategories.h"
 #include "proto_file.pb.h"
+#include "settings.h"
 
-#include <QSettings>
-#include <QDateTime>
-#include <QFile>
-#include <QTextStream>
 #include <QDebug>
 
 #include <amqp.h>
@@ -18,17 +15,17 @@ class TServer
 private:
     amqp_socket_t *m_socket = NULL;
     amqp_connection_state_t m_conn;
-
+    TSettings settings;
     int createSocket();
     int openSocket(const char* host, int port);
 
 public:
     TServer();
     ~TServer();
+    void setSettings(QString settingsFile);
     int connectRabbit();
     void disconnectRabbit();
     void consumeAndSendMessage();
-    //std::string doubleMessage(std::string &serializedMessage);
 };
 
 #endif // TSERVER_H

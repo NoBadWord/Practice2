@@ -8,25 +8,7 @@ TSettingsMenu::TSettingsMenu(QWidget *parent) :
     ui->setupUi(this);
     this->setWindowTitle(QString("Настройки"));
 
-    QSettings settings(m_settingsFile,QSettings::IniFormat);
-
-    m_logPath = settings.value("Logging/logPath").toString();
-    m_logLvl = settings.value("Logging/logLevel").toString();
-
-    m_hostname = settings.value("Network/hostname").toString();
-    m_port = settings.value("Network/port").toInt();
-
-    m_userID = settings.value("User/id").toString();
-    m_routingkey = settings.value("Network/routingkey").toString();
-    m_exchange = settings.value("Network/exchange").toString();
-
-    ui->hostLineEdit->setText(m_hostname);
-    ui->idLineEdit->setText(m_userID);
-    ui->loglvlLineEdit->setText(m_logLvl);
-    ui->logpathLineEdit->setText(m_logPath);
-    ui->portLineEdit->setText(QString::number(m_port));
-    ui->routingKeyLineEdit->setText(m_routingkey);
-    ui->exchangeLineEdit->setText(m_exchange);
+    updateSettings();
 }
 
 TSettingsMenu::~TSettingsMenu()
@@ -94,7 +76,6 @@ void TSettingsMenu::closeEvent(QCloseEvent *event)
 
 QString TSettingsMenu::logPath(){return m_logPath;}
 QString TSettingsMenu::logLvl(){return m_logLvl;}
-QString TSettingsMenu::strBuf(){return m_strBuf;}
 QString TSettingsMenu::hostname(){return m_hostname;}
 QString TSettingsMenu::routingkey(){return m_routingkey;}
 QString TSettingsMenu::exchange(){return m_exchange;}

@@ -61,22 +61,22 @@ int TServer::connectRabbit()
         disconnectRabbit();
     }
 
-    QSettings settings(QString("settings.ini"),QSettings::IniFormat);
+    QSettings setting(QString("settings.ini"),QSettings::IniFormat);
 
-    QString logPath = settings.value("Logging/logPath").toString();
+    QString logPath = settings.logPath();
     g_logFile.reset(new QFile(logPath));
     g_logFile.data()->open(QFile::Append | QFile::Text);
-    g_logLvl = settings.value("Logging/logLevel").toString();
+    g_logLvl = settings.logLvl();
     qInstallMessageHandler(messageHandler);
 
-    QString strBuf = settings.value("Network/hostname").toString();
+    QString strBuf = settings.hostname();
     QByteArray byteArray = strBuf.toUtf8();
     const char* hostname = byteArray.constData();
-    int port = settings.value("Network/port").toInt();
-    QString strBuf2 = settings.value("Network/bindingkey").toString();
+    int port = settings.port();
+    QString strBuf2 = settings.bindingkey();
     QByteArray byteArray2 = strBuf2.toUtf8();
     char const* bindingkey = byteArray2.constData();
-    QString strBuf3 = settings.value("Network/exchange").toString();
+    QString strBuf3 = settings.exchange();
     QByteArray byteArray3 = strBuf3.toUtf8();
     char const* exchange = byteArray3.constData();
 

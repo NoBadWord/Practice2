@@ -17,12 +17,14 @@ SOURCES += \
         main.cpp \
         ../LoggingCategories/LoggingCategories.cpp \
         ../protobuf/proto_file.pb.cpp \
-        server.cpp
+        server.cpp \
+        settings.cpp
 
 HEADERS += \
         ../LoggingCategories/LoggingCategories.h \
         ../protobuf/proto_file.pb.h \
-        server.h
+        server.h \
+        settings.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

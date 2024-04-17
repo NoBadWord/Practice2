@@ -19,11 +19,13 @@ INCLUDEPATH += \
 SOURCES += \
         main.cpp \
         ../server/server.cpp \
+        ../server/settings.cpp \
         ../LoggingCategories/LoggingCategories.cpp \
         ../protobuf/proto_file.pb.cpp
 
 HEADERS += \
         ../server/server.h \
+        ../server/settings.h \
         ../LoggingCategories/LoggingCategories.h \
         ../protobuf/proto_file.pb.h
 

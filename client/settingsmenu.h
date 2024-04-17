@@ -20,7 +20,6 @@ public:
     ~TSettingsMenu();
     QString logPath();
     QString logLvl();
-    QString strBuf();
     QString hostname();
     QString routingkey();
     QString exchange();
@@ -36,7 +35,6 @@ private:
     QString m_settingsFile = QString("settings.ini");
     QString m_logPath;
     QString m_logLvl;
-    QString m_strBuf;
     QString m_hostname;
     QString m_routingkey;
     QString m_exchange;
