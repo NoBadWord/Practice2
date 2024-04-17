@@ -18,21 +18,31 @@ class TSettingsMenu : public QWidget
 public:
     explicit TSettingsMenu(QWidget *parent = nullptr);
     ~TSettingsMenu();
-    QString logPath;
-    QString logLvl;
-    QString strBuf;
-    QString hostname;
-    QString routingkey;
-    QString exchange;
-    int port;
-    QString userID;
+    QString logPath();
+    QString logLvl();
+    QString strBuf();
+    QString hostname();
+    QString routingkey();
+    QString exchange();
+    int port();
+    QString userID();
+    void setSettingsFile(QString settingsFile);
 
 private slots:
     void on_saveBtn_clicked();
 
 private:
     Ui::TSettingsMenu *ui;
-
+    QString m_settingsFile = QString("settings.ini");
+    QString m_logPath;
+    QString m_logLvl;
+    QString m_strBuf;
+    QString m_hostname;
+    QString m_routingkey;
+    QString m_exchange;
+    int m_port;
+    QString m_userID;
+    void updateSettings();
 
 signals:
     void closed();

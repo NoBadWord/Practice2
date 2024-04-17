@@ -8,25 +8,25 @@ TSettingsMenu::TSettingsMenu(QWidget *parent) :
     ui->setupUi(this);
     this->setWindowTitle(QString("Настройки"));
 
-    QSettings settings(QString("settings.ini"),QSettings::IniFormat);
+    QSettings settings(m_settingsFile,QSettings::IniFormat);
 
-    logPath = settings.value("Logging/logPath").toString();
-    logLvl = settings.value("Logging/logLevel").toString();
+    m_logPath = settings.value("Logging/logPath").toString();
+    m_logLvl = settings.value("Logging/logLevel").toString();
 
-    hostname = settings.value("Network/hostname").toString();
-    port = settings.value("Network/port").toInt();
+    m_hostname = settings.value("Network/hostname").toString();
+    m_port = settings.value("Network/port").toInt();
 
-    userID = settings.value("User/id").toString();
-    routingkey = settings.value("Network/routingkey").toString();
-    exchange = settings.value("Network/exchange").toString();
+    m_userID = settings.value("User/id").toString();
+    m_routingkey = settings.value("Network/routingkey").toString();
+    m_exchange = settings.value("Network/exchange").toString();
 
-    ui->hostLineEdit->setText(hostname);
-    ui->idLineEdit->setText(userID);
-    ui->loglvlLineEdit->setText(logLvl);
-    ui->logpathLineEdit->setText(logPath);
-    ui->portLineEdit->setText(QString::number(port));
-    ui->routingKeyLineEdit->setText(routingkey);
-    ui->exchangeLineEdit->setText(exchange);
+    ui->hostLineEdit->setText(m_hostname);
+    ui->idLineEdit->setText(m_userID);
+    ui->loglvlLineEdit->setText(m_logLvl);
+    ui->logpathLineEdit->setText(m_logPath);
+    ui->portLineEdit->setText(QString::number(m_port));
+    ui->routingKeyLineEdit->setText(m_routingkey);
+    ui->exchangeLineEdit->setText(m_exchange);
 }
 
 TSettingsMenu::~TSettingsMenu()
@@ -34,26 +34,54 @@ TSettingsMenu::~TSettingsMenu()
     delete ui;
 }
 
+void TSettingsMenu::updateSettings()
+{
+    QSettings settings(m_settingsFile,QSettings::IniFormat);
+
+    m_logPath = settings.value("Logging/logPath").toString();
+    m_logLvl = settings.value("Logging/logLevel").toString();
+
+    m_hostname = settings.value("Network/hostname").toString();
+    m_port = settings.value("Network/port").toInt();
+
+    m_userID = settings.value("User/id").toString();
+    m_routingkey = settings.value("Network/routingkey").toString();
+    m_exchange = settings.value("Network/exchange").toString();
+
+    ui->hostLineEdit->setText(m_hostname);
+    ui->idLineEdit->setText(m_userID);
+    ui->loglvlLineEdit->setText(m_logLvl);
+    ui->logpathLineEdit->setText(m_logPath);
+    ui->portLineEdit->setText(QString::number(m_port));
+    ui->routingKeyLineEdit->setText(m_routingkey);
+    ui->exchangeLineEdit->setText(m_exchange);
+}
+
+void TSettingsMenu::setSettingsFile(QString settingsFile)
+{
+    m_settingsFile = settingsFile;
+    updateSettings();
+}
 
 void TSettingsMenu::on_saveBtn_clicked()
 {
-     QSettings settings(QString("settings.ini"),QSettings::IniFormat);
+     QSettings settings(m_settingsFile,QSettings::IniFormat);
 
-     logPath = ui->logpathLineEdit->text();
-     logLvl = ui->loglvlLineEdit->text();
-     hostname = ui->hostLineEdit->text();
-     port = ui->portLineEdit->text().toInt();
-     userID = ui->idLineEdit->text();
-     routingkey = ui->routingKeyLineEdit->text();
-     exchange = ui->exchangeLineEdit->text();
+     m_logPath = ui->logpathLineEdit->text();
+     m_logLvl = ui->loglvlLineEdit->text();
+     m_hostname = ui->hostLineEdit->text();
+     m_port = ui->portLineEdit->text().toInt();
+     m_userID = ui->idLineEdit->text();
+     m_routingkey = ui->routingKeyLineEdit->text();
+     m_exchange = ui->exchangeLineEdit->text();
 
-     settings.setValue("Logging/logPath",logPath);
-     settings.setValue("Logging/logLevel",logLvl);
-     settings.setValue("Network/hostname",hostname);
-     settings.setValue("Network/port",port);
-     settings.setValue("User/id",userID);
-     settings.setValue("Network/routingkey",routingkey);
-     settings.setValue("Network/exchange",exchange);
+     settings.setValue("Logging/logPath",m_logPath);
+     settings.setValue("Logging/logLevel",m_logLvl);
+     settings.setValue("Network/hostname",m_hostname);
+     settings.setValue("Network/port",m_port);
+     settings.setValue("User/id",m_userID);
+     settings.setValue("Network/routingkey",m_routingkey);
+     settings.setValue("Network/exchange",m_exchange);
 
      this->close();
 }
@@ -64,3 +92,11 @@ void TSettingsMenu::closeEvent(QCloseEvent *event)
     event->accept();
 }
 
+QString TSettingsMenu::logPath(){return m_logPath;}
+QString TSettingsMenu::logLvl(){return m_logLvl;}
+QString TSettingsMenu::strBuf(){return m_strBuf;}
+QString TSettingsMenu::hostname(){return m_hostname;}
+QString TSettingsMenu::routingkey(){return m_routingkey;}
+QString TSettingsMenu::exchange(){return m_exchange;}
+int TSettingsMenu::port(){return m_port;}
+QString TSettingsMenu::userID(){return m_userID;}

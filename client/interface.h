@@ -6,8 +6,6 @@
 #include "LoggingCategories.h"
 
 #include <QMainWindow>
-#include <QSettings>
-#include <QFile>
 #include <QDebug>
 
 #include <amqp.h>
@@ -26,6 +24,7 @@ public:
     ~TInterface();
     int connectRabbit();
     void disconnectRabbit();
+    void setSettings(QString settingsFile);
 
 public slots:
     void handleSettingsMenuClosed();
@@ -43,5 +42,10 @@ private:
 
     void sendMessage();
     void consumeMessage();
+    int createSocket();
+    int openSocket(const char* host, int port);
+    int loginRabbit();
+    int openChannel();
+    int declareQueue();
 };
 #endif // TINTERFACE_H

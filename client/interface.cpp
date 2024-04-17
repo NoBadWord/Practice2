@@ -14,12 +14,6 @@ TInterface::TInterface(QWidget *parent)
     connect(m_settingsMenu, SIGNAL(closed()), this, SLOT(handleSettingsMenuClosed()));
 }
 
-void TInterface::handleSettingsMenuClosed()
-{
-    disconnectRabbit();
-    connectRabbit();
-}
-
 TInterface::~TInterface()
 {
     amqp_channel_close(m_conn, 1, AMQP_REPLY_SUCCESS);
@@ -27,6 +21,17 @@ TInterface::~TInterface()
     amqp_destroy_connection(m_conn);
     delete m_settingsMenu;
     delete ui;
+}
+
+void TInterface::handleSettingsMenuClosed()
+{
+    disconnectRabbit();
+    connectRabbit();
+}
+
+void TInterface::setSettings(QString settingsFile)
+{
+    m_settingsMenu->setSettingsFile(settingsFile);
 }
 
 void TInterface::disconnectRabbit()
@@ -37,27 +42,8 @@ void TInterface::disconnectRabbit()
     m_socket = NULL;
 }
 
-int TInterface::connectRabbit()
+int TInterface::createSocket()
 {
-    if (m_socket != NULL)
-    {
-        disconnectRabbit();
-    }
-
-    QString logPath = m_settingsMenu->logPath;
-    g_logFile.reset(new QFile(logPath));
-    g_logFile.data()->open(QFile::Append | QFile::Text);
-    g_logLvl = m_settingsMenu->logLvl;
-    qInstallMessageHandler(messageHandler);
-
-    QString strBuf = m_settingsMenu->hostname;
-    QByteArray byteArray = strBuf.toUtf8();
-    const char* hostname = byteArray.constData();
-    int port = m_settingsMenu->port;
-
-    int status;
-
-    m_conn = amqp_new_connection();
     m_socket = amqp_tcp_socket_new(m_conn);
     if (m_socket)
     {
@@ -68,8 +54,13 @@ int TInterface::connectRabbit()
         qCritical(logCritical()) << "Failed when creating TCP socket";
         return 1;
     }
+    return 0;
+}
 
-    status = amqp_socket_open(m_socket, hostname, port);
+int TInterface::openSocket(const char* host, int port)
+{
+    int status;
+    status = amqp_socket_open(m_socket, host, port);
     if (status == AMQP_STATUS_OK)
     {
         qInfo(logInfo()) << "Open TCP socket";
@@ -77,9 +68,14 @@ int TInterface::connectRabbit()
     else
     {
         qCritical(logCritical()) << "Failed when opening TCP socket";
-        return 2;
+        return 1;
     }
+    return 0;
+}
 
+int TInterface::loginRabbit()
+{
+    int status;
     status = amqp_login(m_conn, "/", 0, 131072, 0, AMQP_SASL_METHOD_PLAIN,"guest", "guest").reply_type;
     if (status == AMQP_RESPONSE_NORMAL)
     {
@@ -88,14 +84,19 @@ int TInterface::connectRabbit()
     else if (status == AMQP_RESPONSE_LIBRARY_EXCEPTION)
     {
         qCritical(logCritical()) << "Failed when login to the broker: The broker closed the socket";
-        return 31;
+        return 1;
     }
     else if (status == AMQP_RESPONSE_SERVER_EXCEPTION)
     {
         qCritical(logCritical()) << "Failed when login to the broker: The broker returned an exception";
-        return 32;
+        return 2;
     }
+    return 0;
+}
 
+int TInterface::openChannel()
+{
+    int status;
     amqp_channel_open(m_conn, 1);
     status = amqp_get_rpc_reply(m_conn).reply_type;
     if (status == AMQP_RESPONSE_NORMAL)
@@ -112,7 +113,12 @@ int TInterface::connectRabbit()
         qCritical(logCritical()) << "Failed when open chennel: An exception occurred within the library";
         return 42;
     }
+    return 0;
+}
 
+int TInterface::declareQueue()
+{
+    int status;
     amqp_queue_declare_ok_t *r = amqp_queue_declare(m_conn, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
     status = amqp_get_rpc_reply(m_conn).reply_type;
     if (status == AMQP_RESPONSE_NORMAL)
@@ -138,18 +144,48 @@ int TInterface::connectRabbit()
     }
     return 0;
 }
+int TInterface::connectRabbit()
+{
+    if (m_socket != NULL)
+    {
+        disconnectRabbit();
+    }
+
+    QString logPath = m_settingsMenu->logPath();
+    g_logFile.reset(new QFile(logPath));
+    g_logFile.data()->open(QFile::Append | QFile::Text);
+    g_logLvl = m_settingsMenu->logLvl();
+    qInstallMessageHandler(messageHandler);
+
+    QString strBuf = m_settingsMenu->hostname();
+    QByteArray byteArray = strBuf.toUtf8();
+    const char* hostname = byteArray.constData();
+    int port = m_settingsMenu->port();
+
+    m_conn = amqp_new_connection();
+    if (createSocket())
+        return 1;
+    if (openSocket(hostname, port))
+        return 2;
+    if(loginRabbit())
+        return 3;
+    if(openChannel())
+        return 4;
+    if(declareQueue())
+        return 5;
+    return 0;
+}
 
 void TInterface::sendMessage()
 {
-
-    QString logPath = m_settingsMenu->logPath;
-    QString strBuf = m_settingsMenu->routingkey;
+    QString logPath = m_settingsMenu->logPath();
+    QString strBuf = m_settingsMenu->routingkey();
     QByteArray byteArray = strBuf.toUtf8();
     char const* routingkey = byteArray.constData();
-    QString strBuf2 = m_settingsMenu->exchange;
+    QString strBuf2 = m_settingsMenu->exchange();
     QByteArray byteArray2 = strBuf2.toUtf8();
     char const* exchange = byteArray2.constData();
-    QString strBuf3 = m_settingsMenu->userID;
+    QString strBuf3 = m_settingsMenu->userID();
     std::string userID = strBuf3.toStdString();
 
     TestTask::Messages::Request messageRequest;
