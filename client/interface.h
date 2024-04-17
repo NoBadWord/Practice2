@@ -25,6 +25,10 @@ public:
     TInterface(QWidget *parent = nullptr);
     ~TInterface();
     int connectRabbit();
+    void disconnectRabbit();
+
+public slots:
+    void handleSettingsMenuClosed();
 
 private slots:
     void on_SendNumberBtn_clicked();
@@ -32,7 +36,7 @@ private slots:
 
 private:
     Ui::TInterface *ui;
-    TSettingsMenu m_settingsMenu;
+    TSettingsMenu* m_settingsMenu;
     amqp_socket_t *m_socket = NULL;
     amqp_connection_state_t m_conn;
     amqp_bytes_t m_reply_to_queue;

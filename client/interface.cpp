@@ -10,6 +10,14 @@ TInterface::TInterface(QWidget *parent)
 {
     ui->setupUi(this);
     this->setWindowTitle(QString("Удвоение через брокер"));
+    m_settingsMenu = new TSettingsMenu;
+    connect(m_settingsMenu, SIGNAL(closed()), this, SLOT(handleSettingsMenuClosed()));
+}
+
+void TInterface::handleSettingsMenuClosed()
+{
+    disconnectRabbit();
+    connectRabbit();
 }
 
 TInterface::~TInterface()
@@ -17,30 +25,35 @@ TInterface::~TInterface()
     amqp_channel_close(m_conn, 1, AMQP_REPLY_SUCCESS);
     amqp_connection_close(m_conn, AMQP_REPLY_SUCCESS);
     amqp_destroy_connection(m_conn);
+    delete m_settingsMenu;
     delete ui;
+}
+
+void TInterface::disconnectRabbit()
+{
+    amqp_channel_close(m_conn, 1, AMQP_REPLY_SUCCESS);
+    amqp_connection_close(m_conn, AMQP_REPLY_SUCCESS);
+    amqp_destroy_connection(m_conn);
+    m_socket = NULL;
 }
 
 int TInterface::connectRabbit()
 {
     if (m_socket != NULL)
     {
-        amqp_channel_close(m_conn, 1, AMQP_REPLY_SUCCESS);
-        amqp_connection_close(m_conn, AMQP_REPLY_SUCCESS);
-        amqp_destroy_connection(m_conn);
-        m_socket = NULL;
+        disconnectRabbit();
     }
 
-    QSettings settings(QString("settings.ini"), QSettings::IniFormat);
-    QString logPath = settings.value("Logging/logPath").toString();
+    QString logPath = m_settingsMenu->logPath;
     g_logFile.reset(new QFile(logPath));
     g_logFile.data()->open(QFile::Append | QFile::Text);
-    g_logLvl = settings.value("Logging/logLevel").toString();
+    g_logLvl = m_settingsMenu->logLvl;
     qInstallMessageHandler(messageHandler);
 
-    QString strBuf = settings.value("Network/hostname").toString();
+    QString strBuf = m_settingsMenu->hostname;
     QByteArray byteArray = strBuf.toUtf8();
     const char* hostname = byteArray.constData();
-    int port = settings.value("Network/port").toInt();
+    int port = m_settingsMenu->port;
 
     int status;
 
@@ -128,18 +141,15 @@ int TInterface::connectRabbit()
 
 void TInterface::sendMessage()
 {
-    QSettings settings(QString("settings.ini"),QSettings::IniFormat);
 
-    QString logPath = settings.value("Logging/logPath").toString();
-    g_logFile.reset(new QFile(logPath));
-    g_logFile.data()->open(QFile::Append | QFile::Text);
-    QString strBuf = settings.value("Network/routingkey").toString();
+    QString logPath = m_settingsMenu->logPath;
+    QString strBuf = m_settingsMenu->routingkey;
     QByteArray byteArray = strBuf.toUtf8();
     char const* routingkey = byteArray.constData();
-    QString strBuf2 = settings.value("Network/exchange").toString();
+    QString strBuf2 = m_settingsMenu->exchange;
     QByteArray byteArray2 = strBuf2.toUtf8();
     char const* exchange = byteArray2.constData();
-    QString strBuf3 = settings.value("User/id").toString();
+    QString strBuf3 = m_settingsMenu->userID;
     std::string userID = strBuf3.toStdString();
 
     TestTask::Messages::Request messageRequest;
@@ -228,6 +238,6 @@ void TInterface::on_SendNumberBtn_clicked()
 
 void TInterface::on_settingsMenuBtn_triggered()
 {
-    m_settingsMenu.show();
+    m_settingsMenu->show();
 }
 
