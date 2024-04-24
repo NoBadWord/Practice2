@@ -23,6 +23,11 @@ void TServer::disconnectRabbit()
     m_socket = NULL;
 }
 
+void TServer::setSettings(QString settingsFile)
+{
+    m_settings.setSettingsFile(settingsFile);
+}
+
 int TServer::createSocket()
 {
     m_socket = amqp_tcp_socket_new(m_conn);
@@ -61,22 +66,22 @@ int TServer::connectRabbit()
         disconnectRabbit();
     }
 
-    QSettings setting(QString("settings.ini"),QSettings::IniFormat);
+    QSettings s(QString("settings.ini"),QSettings::IniFormat);
 
-    QString logPath = settings.logPath();
+    QString logPath = m_settings.logPath();
     g_logFile.reset(new QFile(logPath));
     g_logFile.data()->open(QFile::Append | QFile::Text);
-    g_logLvl = settings.logLvl();
+    g_logLvl = m_settings.logLvl();
     qInstallMessageHandler(messageHandler);
 
-    QString strBuf = settings.hostname();
+    QString strBuf = m_settings.hostname();
     QByteArray byteArray = strBuf.toUtf8();
     const char* hostname = byteArray.constData();
-    int port = settings.port();
-    QString strBuf2 = settings.bindingkey();
+    int port = m_settings.port();
+    QString strBuf2 = m_settings.bindingkey();
     QByteArray byteArray2 = strBuf2.toUtf8();
     char const* bindingkey = byteArray2.constData();
-    QString strBuf3 = settings.exchange();
+    QString strBuf3 = m_settings.exchange();
     QByteArray byteArray3 = strBuf3.toUtf8();
     char const* exchange = byteArray3.constData();
 

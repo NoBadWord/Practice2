@@ -15,7 +15,7 @@ class TServer
 private:
     amqp_socket_t *m_socket = NULL;
     amqp_connection_state_t m_conn;
-    TSettings settings;
+    TSettings m_settings;
     int createSocket();
     int openSocket(const char* host, int port);
 
