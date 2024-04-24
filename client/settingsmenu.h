@@ -44,9 +44,6 @@ private:
 
 signals:
     void closed();
-
-protected:
-    void closeEvent(QCloseEvent *event) override;
 };
 
 #endif // SETTINGSMENU_H

@@ -64,14 +64,8 @@ void TSettingsMenu::on_saveBtn_clicked()
      settings.setValue("User/id",m_userID);
      settings.setValue("Network/routingkey",m_routingkey);
      settings.setValue("Network/exchange",m_exchange);
-
+     emit closed();
      this->close();
-}
-
-void TSettingsMenu::closeEvent(QCloseEvent *event)
-{
-    emit closed();
-    event->accept();
 }
 
 QString TSettingsMenu::logPath(){return m_logPath;}
