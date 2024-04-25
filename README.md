@@ -8,7 +8,7 @@
 <p>Для работы необходимы библиотеки: rabbitmq, protobuf
 
 <h2> Схема взаимодействия между клиентом и сервером: </h2>
-<p>https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUg0KHRhdC10LzQsCDQstC30LDQuNC80L7QtNC10LnRgdGC0LLQuNGPINC80LXQttC00YMg0LrQu9C40LXQvdGC0L7QvCDQuCDRgdC10YDQsgABBb7QvAoKQ2xpZW50LT5RdWV1ZTogUmVxdWVzdFxubV9yZXBseV90b19xdWV1ZVxuY29ycmVsYXRpb25faWQKACwFLT5TZXJ2ZXI6CgACBi0-YW1xLmdlbjoKAAIHLT4AXAY6UmVwbHlcbgBOCAA_EQ&s=default </p>
+<p>https://www.websequencediagrams.com/cgi-bin/cdraw?lz=dGl0bGUg0KHRhdC10LzQsCDQstC30LDQuNC80L7QtNC10LnRgdGC0LLQuNGPINC80LXQttC00YMg0LrQu9C40LXQvdGC0L7QvCDQuCDRgdC10YDQsgABBb7QvAoKQ2xpZW50LT5RdWV1ZTogUmVxdWVzdFxubV9yZXBseV90b19xdWV1ZVxuY29ycmVsYXRpb25faWQKACwFLT5TZXJ2ZXI6CgACBi0-YW1xLmdlbjpSZXBseVxuAD0IAC4RACEHLT4AewY6Cg&s=default</p>
 
 <h2>Тип exchange, который был выбран </h2>
 <p>direct, так как он записывает сообщение в очередь, если совпадают ключи маршрутизации сообщения и очереди. Таким образом, сообщение попадет в нужную очередь, откуда впоследствии перейдет на сервер.</p>
