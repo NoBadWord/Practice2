@@ -2,10 +2,28 @@
 #include <QCoreApplication>
 #include <gtest/gtest.h>
 
+
+
 TEST(TServer, ConnectionToRabbitMQ)
 {
     TServer server;
     ASSERT_EQ(0, server.connectRabbit());
+}
+
+TEST(TServer, doubleMessage)
+{
+    TServer server;
+    server.connectRabbit();
+    TestTask::Messages::Request messageRequest;
+    TestTask::Messages::Response messageResponse;
+    messageRequest.set_id("id-1");
+    messageRequest.set_req(2);
+    std::string serializedMessage;
+    messageRequest.SerializeToString(&serializedMessage);
+    std::string serializedMessageToSend;
+    serializedMessageToSend = server.doubleMessage(serializedMessage);
+    messageResponse.ParseFromString(serializedMessageToSend);
+    ASSERT_EQ(4, 4);
 }
 
 int main(int argc, char *argv[])

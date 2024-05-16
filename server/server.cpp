@@ -225,10 +225,25 @@ int TServer::connectRabbit()
     return 0;
 }
 
+std::string TServer::doubleMessage(std::string &serializedMessage)
+{
+    std::string serializedMessageToSend;
+    TestTask::Messages::Request messageRequest;
+    TestTask::Messages::Response messageResponse;
+
+    messageRequest.ParseFromString(serializedMessage);
+    qDebug(logDebug()) <<"Received <<"<<messageRequest.req()<<">> from <<"<<QString::fromStdString(messageRequest.id())<< ">>";
+
+    messageResponse.set_id(messageRequest.id());
+    messageResponse.set_res(messageRequest.req()*2);
+    messageResponse.SerializeToString(&serializedMessageToSend);
+    return serializedMessageToSend;
+}
+
 void TServer::consumeAndSendMessage()
 {
     std::string serializedMessage;
-    TestTask::Messages::Request messageRequest;
+    std::string serializedMessageToSend;
     TestTask::Messages::Response messageResponse;
     amqp_rpc_reply_t res;
     amqp_envelope_t envelope;
@@ -243,23 +258,19 @@ void TServer::consumeAndSendMessage()
 
     serializedMessage = std::string((char*)envelope.message.body.bytes, envelope.message.body.len);
 
-    messageRequest.ParseFromString(serializedMessage);
-    qDebug(logDebug()) <<"Received <<"<<messageRequest.req()<<">> from <<"<<QString::fromStdString(messageRequest.id())<< ">>";
-
-    messageResponse.set_id(messageRequest.id());
-    messageResponse.set_res(messageRequest.req()*2);
-    messageResponse.SerializeToString(&serializedMessage);
+    serializedMessageToSend = doubleMessage(serializedMessage);
+    messageResponse.ParseFromString(serializedMessageToSend);
 
     amqp_bytes_t result;
-    result.len = serializedMessage.size();
-    result.bytes = (void*)serializedMessage.c_str();
+    result.len = serializedMessageToSend.size();
+    result.bytes = (void*)serializedMessageToSend.c_str();
 
     amqp_basic_properties_t props;
     props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG | AMQP_BASIC_CORRELATION_ID_FLAG;
     props.content_type = amqp_cstring_bytes("number");
 
     props.delivery_mode = 2;
-    props.correlation_id = amqp_cstring_bytes(messageRequest.id().c_str());
+    props.correlation_id = amqp_cstring_bytes(messageResponse.id().c_str());
 
     if (amqp_basic_publish(m_conn,1,amqp_empty_bytes,amqp_cstring_bytes((char *)envelope.message.properties.reply_to.bytes),0,0,&props, result) != AMQP_STATUS_OK)
     {

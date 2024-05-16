@@ -22,7 +22,7 @@ private:
     int openChannel();
     amqp_queue_declare_ok_t *declareQueue();
     int bindQueue(amqp_bytes_t &queuename, const char* exchange, const char* bindingkey);
-    int basicConsume(amqp_bytes_t &queuename);
+    int basicConsume(amqp_bytes_t &queuename); 
 
 public:
     TServer(QString settingsFile = "settings.ini");
@@ -31,6 +31,7 @@ public:
     int connectRabbit();
     void disconnectRabbit();
     void consumeAndSendMessage();
+    std::string doubleMessage(std::string &serializedMessage);
 };
 
 #endif // TSERVER_H
