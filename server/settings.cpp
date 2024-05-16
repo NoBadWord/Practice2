@@ -2,7 +2,7 @@
 
 TSettings::TSettings()
 {
-    updateSettings();
+
 }
 
 void TSettings::updateSettings()

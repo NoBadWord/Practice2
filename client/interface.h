@@ -27,7 +27,7 @@ public:
     void setSettings(QString settingsFile);
 
 public slots:
-    void handleSettingsMenuClosed();
+    void updateSettings();
 
 private slots:
     void on_SendNumberBtn_clicked();

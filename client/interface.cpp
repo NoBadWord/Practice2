@@ -11,7 +11,14 @@ TInterface::TInterface(QWidget *parent)
     ui->setupUi(this);
     this->setWindowTitle(QString("Удвоение через брокер"));
     m_settingsMenu = new TSettingsMenu;
-    connect(m_settingsMenu, SIGNAL(closed()), this, SLOT(handleSettingsMenuClosed()));
+
+    QString logPath = m_settingsMenu->logPath();
+    g_logFile.reset(new QFile(logPath));
+    g_logFile.data()->open(QFile::Append | QFile::Text);
+    g_logLvl = m_settingsMenu->logLvl();
+    qInstallMessageHandler(messageHandler);
+
+    connect(m_settingsMenu, SIGNAL(saveSettingsSignal()), this, SLOT(updateSettings()));
 }
 
 TInterface::~TInterface()
@@ -23,9 +30,15 @@ TInterface::~TInterface()
     delete ui;
 }
 
-void TInterface::handleSettingsMenuClosed()
+void TInterface::updateSettings()
 {
     disconnectRabbit();
+
+    QString logPath = m_settingsMenu->logPath();
+    g_logFile.reset(new QFile(logPath));
+    g_logFile.data()->open(QFile::Append | QFile::Text);
+    g_logLvl = m_settingsMenu->logLvl();
+
     connectRabbit();
 }
 
@@ -151,12 +164,6 @@ int TInterface::connectRabbit()
         disconnectRabbit();
     }
 
-    QString logPath = m_settingsMenu->logPath();
-    g_logFile.reset(new QFile(logPath));
-    g_logFile.data()->open(QFile::Append | QFile::Text);
-    g_logLvl = m_settingsMenu->logLvl();
-    qInstallMessageHandler(messageHandler);
-
     QString strBuf = m_settingsMenu->hostname();
     QByteArray byteArray = strBuf.toUtf8();
     const char* hostname = byteArray.constData();
@@ -212,7 +219,8 @@ void TInterface::sendMessage()
         qCritical(logCritical()) << "Out of memory while copying queue name";
     }
 
-    props.correlation_id = amqp_cstring_bytes(routingkey);
+    props.correlation_id = amqp_cstring_bytes(userID.c_str());
+
 
     if(amqp_basic_publish(m_conn, 1, amqp_cstring_bytes(exchange), amqp_cstring_bytes(routingkey), 0, 0, &props, result) != AMQP_STATUS_OK)
     {

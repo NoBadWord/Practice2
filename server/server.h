@@ -18,9 +18,14 @@ private:
     TSettings m_settings;
     int createSocket();
     int openSocket(const char* host, int port);
+    int loginRabbit();
+    int openChannel();
+    amqp_queue_declare_ok_t *declareQueue();
+    int bindQueue(amqp_bytes_t &queuename, const char* exchange, const char* bindingkey);
+    int basicConsume(amqp_bytes_t &queuename);
 
 public:
-    TServer();
+    TServer(QString settingsFile = "settings.ini");
     ~TServer();
     void setSettings(QString settingsFile);
     int connectRabbit();

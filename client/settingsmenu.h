@@ -43,7 +43,7 @@ private:
     void updateSettings();
 
 signals:
-    void closed();
+    void saveSettingsSignal();
 };
 
 #endif // SETTINGSMENU_H
