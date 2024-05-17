@@ -1,11 +1,11 @@
 #ifndef SETTINGSMENU_H
 #define SETTINGSMENU_H
 
+#include "LoggingCategories.h"
+
 #include <QWidget>
 #include <QSettings>
 #include <QCloseEvent>
-
-#include "LoggingCategories.h"
 
 namespace Ui {
 class TSettingsMenu;

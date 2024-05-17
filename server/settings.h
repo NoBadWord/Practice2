@@ -1,8 +1,10 @@
 #ifndef TSETTINGS_H
 #define TSETTINGS_H
 
+#include "LoggingCategories.h"
 #include <QString>
 #include <QSettings>
+#include <QFile>
 
 class TSettings
 {

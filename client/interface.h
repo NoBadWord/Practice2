@@ -3,7 +3,6 @@
 
 #include "settingsmenu.h"
 #include "proto_file.pb.h"
-#include "LoggingCategories.h"
 
 #include <QMainWindow>
 #include <QDebug>

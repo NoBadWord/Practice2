@@ -1,8 +1,12 @@
 #include "settings.h"
 
+extern QScopedPointer<QFile> g_logFile;
+extern QString g_logLvl;
+
 TSettings::TSettings()
 {
-
+    updateSettings();
+    qInstallMessageHandler(messageHandler);
 }
 
 void TSettings::updateSettings()
@@ -14,6 +18,10 @@ void TSettings::updateSettings()
     m_port = settings.value("Network/port").toInt();
     m_bindingkey = settings.value("Network/bindingkey").toString();
     m_exchange = settings.value("Network/exchange").toString();
+
+    g_logFile.reset(new QFile(m_logPath));
+    g_logFile.data()->open(QFile::Append | QFile::Text);
+    g_logLvl = m_logLvl;
 }
 
 void TSettings::setSettingsFile(QString settingsFile)

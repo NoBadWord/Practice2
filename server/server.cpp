@@ -1,16 +1,8 @@
 #include "server.h"
 
-extern QScopedPointer<QFile> g_logFile;
-extern QString g_logLvl;
-
 TServer::TServer(QString settingsFile)
 {
     m_settings.setSettingsFile(settingsFile);
-    QString logPath = m_settings.logPath();
-    g_logFile.reset(new QFile(logPath));
-    g_logFile.data()->open(QFile::Append | QFile::Text);
-    g_logLvl = m_settings.logLvl();
-    qInstallMessageHandler(messageHandler);
 }
 
 TServer::~TServer()

@@ -1,7 +1,6 @@
 #ifndef TSERVER_H
 #define TSERVER_H
 
-#include "LoggingCategories.h"
 #include "proto_file.pb.h"
 #include "settings.h"
 

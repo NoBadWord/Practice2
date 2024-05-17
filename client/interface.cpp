@@ -1,9 +1,6 @@
 #include "interface.h"
 #include "ui_interface.h"
 
-extern QScopedPointer<QFile> g_logFile;
-extern QString g_logLvl;
-
 TInterface::TInterface(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::TInterface)
@@ -11,12 +8,6 @@ TInterface::TInterface(QWidget *parent)
     ui->setupUi(this);
     this->setWindowTitle(QString("Удвоение через брокер"));
     m_settingsMenu = new TSettingsMenu;
-
-    QString logPath = m_settingsMenu->logPath();
-    g_logFile.reset(new QFile(logPath));
-    g_logFile.data()->open(QFile::Append | QFile::Text);
-    g_logLvl = m_settingsMenu->logLvl();
-    qInstallMessageHandler(messageHandler);
 
     connect(m_settingsMenu, SIGNAL(saveSettingsSignal()), this, SLOT(updateSettings()));
 }
@@ -33,12 +24,6 @@ TInterface::~TInterface()
 void TInterface::updateSettings()
 {
     disconnectRabbit();
-
-    QString logPath = m_settingsMenu->logPath();
-    g_logFile.reset(new QFile(logPath));
-    g_logFile.data()->open(QFile::Append | QFile::Text);
-    g_logLvl = m_settingsMenu->logLvl();
-
     connectRabbit();
 }
 

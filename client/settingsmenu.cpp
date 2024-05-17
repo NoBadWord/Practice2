@@ -1,6 +1,9 @@
 #include "settingsmenu.h"
 #include "ui_settingsmenu.h"
 
+extern QScopedPointer<QFile> g_logFile;
+extern QString g_logLvl;
+
 TSettingsMenu::TSettingsMenu(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::TSettingsMenu)
@@ -37,6 +40,11 @@ void TSettingsMenu::updateSettings()
     ui->portLineEdit->setText(QString::number(m_port));
     ui->routingKeyLineEdit->setText(m_routingkey);
     ui->exchangeLineEdit->setText(m_exchange);
+
+    g_logFile.reset(new QFile(m_logPath));
+    g_logFile.data()->open(QFile::Append | QFile::Text);
+    g_logLvl = m_logLvl;
+    qInstallMessageHandler(messageHandler);
 }
 
 void TSettingsMenu::setSettingsFile(QString settingsFile)
@@ -64,6 +72,7 @@ void TSettingsMenu::on_saveBtn_clicked()
      settings.setValue("User/id",m_userID);
      settings.setValue("Network/routingkey",m_routingkey);
      settings.setValue("Network/exchange",m_exchange);
+     updateSettings();
      emit saveSettingsSignal();
      this->close();
 }
