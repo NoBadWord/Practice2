@@ -126,19 +126,19 @@ int TInterface::declareQueue()
     else if (status == AMQP_RESPONSE_SERVER_EXCEPTION)
     {
         qCritical(logCritical()) << "Failed when declare queue: The broker returned an exception";
-        return 51;
+        return 1;
     }
     else if (status == AMQP_RESPONSE_LIBRARY_EXCEPTION)
     {
         qCritical(logCritical()) << "Failed when declare queue: An exception occurred within the library";
-        return 52;
+        return 2;
     }
 
     m_reply_to_queue = amqp_bytes_malloc_dup(r->queue);
     if (m_reply_to_queue.bytes == NULL)
     {
       qCritical(logCritical()) << "Out of memory while copying queue name";
-      return 6;
+      return 3;
     }
     return 0;
 }
@@ -163,14 +163,12 @@ int TInterface::connectRabbit()
         return 3;
     if(openChannel())
         return 4;
-    if(declareQueue())
-        return 5;
     return 0;
 }
 
 void TInterface::sendMessage()
 {
-    QString logPath = m_settingsMenu->logPath();
+    declareQueue();
     QString strBuf = m_settingsMenu->routingkey();
     QByteArray byteArray = strBuf.toUtf8();
     char const* routingkey = byteArray.constData();
@@ -216,25 +214,12 @@ void TInterface::sendMessage()
         qDebug(logDebug()) << "Number" << messageRequest.req() << "is publish";
     }
     amqp_bytes_free(props.reply_to);
-
-    amqp_basic_consume(m_conn, 1, m_reply_to_queue, amqp_empty_bytes, 0, 1, 0, amqp_empty_table);
-    int status = amqp_get_rpc_reply(m_conn).reply_type;
-    if (status == AMQP_RESPONSE_SERVER_EXCEPTION)
-    {
-        qCritical(logCritical()) << "Failed when consume: The broker returned an exception";
-    }
-    else if (status == AMQP_RESPONSE_LIBRARY_EXCEPTION)
-    {
-        qCritical(logCritical()) << "Failed when consume: An exception occurred within the library";
-    }
 }
 
 void TInterface::consumeMessage()
 {
     TestTask::Messages::Response messageResponse;
     std::string serializedMessage;
-    amqp_basic_properties_t props;
-    props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG | AMQP_BASIC_REPLY_TO_FLAG | AMQP_BASIC_CORRELATION_ID_FLAG;
     amqp_rpc_reply_t res;
     amqp_envelope_t envelope;
     timeval timeout;
@@ -242,22 +227,43 @@ void TInterface::consumeMessage()
     timeout.tv_usec = 0;
 
     amqp_maybe_release_buffers(m_conn);
+
+    amqp_basic_consume_ok_t* consume_ok = amqp_basic_consume(m_conn, 1, m_reply_to_queue, amqp_empty_bytes, 0, 1, 0, amqp_empty_table);
+    if (consume_ok == NULL)
+    {
+        qCritical(logCritical()) << "Failed to start consuming: " << amqp_error_string2(amqp_get_rpc_reply(m_conn).library_error);
+        return;
+    }
+    amqp_bytes_t consumer_tag = consume_ok->consumer_tag;
+
     res = amqp_consume_message(m_conn, &envelope, &timeout, 0);
     if (res.reply_type == AMQP_RESPONSE_NORMAL)
     {
         serializedMessage = std::string((char*)envelope.message.body.bytes, envelope.message.body.len);
         messageResponse.ParseFromString(serializedMessage);
         ui->outputLabel->setText(QString::number(messageResponse.res()));
-        qDebug(logDebug()) << "Number" << messageResponse.res() << "is consume";
+        qDebug(logDebug()) << "Number" << messageResponse.res() << "is consumed";
     }
     else
     {
         ui->outputLabel->setText(QString("SERVER ERROR"));
-        qCritical(logCritical()) << "SERVER ERROR WHEN CONSUME MESSAGE";
+        qCritical(logCritical()) << "SERVER ERROR WHEN CONSUME MESSAGE: " << amqp_error_string2(res.library_error);
     }
-
     amqp_destroy_envelope(&envelope);
+
+    amqp_basic_cancel(m_conn, 1, consumer_tag);
+    int status = amqp_get_rpc_reply(m_conn).reply_type;
+    if (status == AMQP_RESPONSE_SERVER_EXCEPTION)
+    {
+        qCritical(logCritical()) << "Failed to cancel consumer: The broker returned an exception";
+    }
+    else if (status == AMQP_RESPONSE_LIBRARY_EXCEPTION)
+    {
+        qCritical(logCritical()) << "Failed to cancel consumer: An exception occurred within the library";
+    }
+    amqp_bytes_free(m_reply_to_queue);
 }
+
 
 void TInterface::on_SendNumberBtn_clicked()
 {
