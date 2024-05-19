@@ -11,6 +11,7 @@ TSettingsMenu::TSettingsMenu(QWidget *parent) :
     ui->setupUi(this);
     this->setWindowTitle(QString("Настройки"));
 
+    qInstallMessageHandler(messageHandler);
     updateSettings();
 }
 
@@ -44,7 +45,6 @@ void TSettingsMenu::updateSettings()
     g_logFile.reset(new QFile(m_logPath));
     g_logFile.data()->open(QFile::Append | QFile::Text);
     g_logLvl = m_logLvl;
-    qInstallMessageHandler(messageHandler);
 }
 
 void TSettingsMenu::setSettingsFile(QString settingsFile)

@@ -37,7 +37,7 @@ void TInterface::disconnectRabbit()
     amqp_channel_close(m_conn, 1, AMQP_REPLY_SUCCESS);
     amqp_connection_close(m_conn, AMQP_REPLY_SUCCESS);
     amqp_destroy_connection(m_conn);
-    m_socket = NULL;
+    m_socket = nullptr;
 }
 
 int TInterface::createSocket()
@@ -104,12 +104,12 @@ int TInterface::openChannel()
     else if (status == AMQP_RESPONSE_SERVER_EXCEPTION)
     {
         qCritical(logCritical()) << "Failed when open chennel: The broker returned an exception";
-        return 41;
+        return 1;
     }
     else if (status == AMQP_RESPONSE_LIBRARY_EXCEPTION)
     {
         qCritical(logCritical()) << "Failed when open chennel: An exception occurred within the library";
-        return 42;
+        return 2;
     }
     return 0;
 }
@@ -118,6 +118,7 @@ int TInterface::declareQueue()
 {
     int status;
     amqp_queue_declare_ok_t *r = amqp_queue_declare(m_conn, 1, amqp_empty_bytes, 0, 0, 0, 1, amqp_empty_table);
+
     status = amqp_get_rpc_reply(m_conn).reply_type;
     if (status == AMQP_RESPONSE_NORMAL)
     {
@@ -148,13 +149,12 @@ int TInterface::connectRabbit()
     {
         disconnectRabbit();
     }
-
     QString strBuf = m_settingsMenu->hostname();
     QByteArray byteArray = strBuf.toUtf8();
     const char* hostname = byteArray.constData();
     int port = m_settingsMenu->port();
-
     m_conn = amqp_new_connection();
+
     if (createSocket())
         return 1;
     if (openSocket(hostname, port))

@@ -5,7 +5,6 @@ extern QString g_logLvl;
 
 TSettings::TSettings()
 {
-    updateSettings();
     qInstallMessageHandler(messageHandler);
 }
 

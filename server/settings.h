@@ -19,7 +19,7 @@ public:
     void setSettingsFile(QString settingsFile);
 
 private:
-    QString m_settingsFile = QString("settings.ini");
+    QString m_settingsFile;
     QString m_logPath;
     QString m_logLvl;
     QString m_hostname;
