@@ -17,13 +17,13 @@ TEST(TServer, doubleMessage)
     TestTask::Messages::Request messageRequest;
     TestTask::Messages::Response messageResponse;
     messageRequest.set_id("id-1");
-    messageRequest.set_req(2);
+    messageRequest.set_req(12);
     std::string serializedMessage;
     messageRequest.SerializeToString(&serializedMessage);
     std::string serializedMessageToSend;
     serializedMessageToSend = server.doubleMessage(serializedMessage);
     messageResponse.ParseFromString(serializedMessageToSend);
-    ASSERT_EQ(4, 4);
+    ASSERT_EQ(24, messageResponse.res());
 }
 
 int main(int argc, char *argv[])
