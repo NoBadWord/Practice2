@@ -58,7 +58,10 @@ int TInterface::createSocket()
 int TInterface::openSocket(const char* host, int port)
 {
     int status;
-    status = amqp_socket_open(m_socket, host, port);
+    timeval timeout;
+    timeout.tv_sec = 3;
+    timeout.tv_usec = 0;
+    status = amqp_socket_open_noblock(m_socket, host, port, &timeout);
     if (status == AMQP_STATUS_OK)
     {
         qInfo(logInfo()) << "Open TCP socket";
