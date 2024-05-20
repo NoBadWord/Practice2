@@ -7,6 +7,7 @@
 #include <QMainWindow>
 #include <QDebug>
 
+
 #include <amqp.h>
 #include <amqp_tcp_socket.h>
 
