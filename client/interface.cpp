@@ -1,13 +1,14 @@
 #include "interface.h"
 #include "ui_interface.h"
 
-TInterface::TInterface(QWidget *parent)
+TInterface::TInterface(QString settingsFile, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::TInterface)
 {
     ui->setupUi(this);
     this->setWindowTitle(QString("Удвоение через брокер"));
     m_settingsMenu = new TSettingsMenu;
+    m_settingsMenu->setSettingsFile(settingsFile);
 
     connect(m_settingsMenu, SIGNAL(saveSettingsSignal()), this, SLOT(updateSettings()));
 }

@@ -20,7 +20,7 @@ class TInterface : public QMainWindow
     Q_OBJECT
 
 public:
-    TInterface(QWidget *parent = nullptr);
+    TInterface(QString settingsFile = "settings.ini", QWidget *parent = nullptr);
     ~TInterface();
     int connectRabbit();
     void disconnectRabbit();

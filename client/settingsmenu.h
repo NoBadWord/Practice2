@@ -32,7 +32,7 @@ private slots:
 
 private:
     Ui::TSettingsMenu *ui;
-    QString m_settingsFile = QString("settings.ini");
+    QString m_settingsFile;
     QString m_logPath;
     QString m_logLvl;
     QString m_hostname;

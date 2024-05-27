@@ -12,7 +12,6 @@ TSettingsMenu::TSettingsMenu(QWidget *parent) :
     this->setWindowTitle(QString("Настройки"));
 
     qInstallMessageHandler(messageHandler);
-    updateSettings();
 }
 
 TSettingsMenu::~TSettingsMenu()
