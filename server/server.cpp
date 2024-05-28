@@ -1,8 +1,8 @@
 #include "server.h"
 
-TServer::TServer(QString settingsFile)
+TServer::TServer(const TSettings &settings)
 {
-    m_settings.setSettingsFile(settingsFile);
+    m_settings = settings;
 }
 
 TServer::~TServer()
@@ -12,17 +12,17 @@ TServer::~TServer()
     amqp_destroy_connection(m_conn);
 }
 
+void TServer::setSettings(const TSettings &settings)
+{
+    m_settings = settings;
+}
+
 void TServer::disconnectRabbit()
 {
     amqp_channel_close(m_conn, 1, AMQP_REPLY_SUCCESS);
     amqp_connection_close(m_conn, AMQP_REPLY_SUCCESS);
     amqp_destroy_connection(m_conn);
     m_socket = NULL;
-}
-
-void TServer::setSettings(QString settingsFile)
-{
-    m_settings.setSettingsFile(settingsFile);
 }
 
 int TServer::createSocket()
@@ -172,14 +172,14 @@ int TServer::connectRabbit()
         disconnectRabbit();
     }
 
-    QString strBuf = m_settings.hostname();
+    QString strBuf = m_settings.hostname;
     QByteArray byteArray = strBuf.toUtf8();
     const char* hostname = byteArray.constData();
-    int port = m_settings.port();
-    QString strBuf2 = m_settings.bindingkey();
+    int port = m_settings.port;
+    QString strBuf2 = m_settings.bindingkey;
     QByteArray byteArray2 = strBuf2.toUtf8();
     char const* bindingkey = byteArray2.constData();
-    QString strBuf3 = m_settings.exchange();
+    QString strBuf3 = m_settings.exchange;
     QByteArray byteArray3 = strBuf3.toUtf8();
     char const* exchange = byteArray3.constData();
 

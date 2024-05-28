@@ -1,7 +1,11 @@
 #include "server.h"
 
 int main() {
-    TServer server;
+    setLog("settings.ini");
+    TSettings settings;
+    settings = readSettings("settings.ini");
+    TServer server(settings);
+
     if (server.connectRabbit())
     {
         return 1;

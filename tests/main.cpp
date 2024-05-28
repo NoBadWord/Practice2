@@ -6,13 +6,19 @@
 
 TEST(TServer, ConnectionToRabbitMQ)
 {
-    TServer server;
+    setLog("settings.ini");
+    TSettings settings;
+    settings = readSettings("settings.ini");
+    TServer server(settings);
     ASSERT_EQ(0, server.connectRabbit());
 }
 
 TEST(TServer, doubleMessage)
 {
-    TServer server;
+    setLog("settings.ini");
+    TSettings settings;
+    settings = readSettings("settings.ini");
+    TServer server(settings);
     server.connectRabbit();
     TestTask::Messages::Request messageRequest;
     TestTask::Messages::Response messageResponse;

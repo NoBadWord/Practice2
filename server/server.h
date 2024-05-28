@@ -9,6 +9,7 @@
 #include <amqp.h>
 #include <amqp_tcp_socket.h>
 
+
 class TServer
 {
 private:
@@ -24,9 +25,9 @@ private:
     int basicConsume(amqp_bytes_t &queuename); 
 
 public:
-    TServer(QString settingsFile = "settings.ini");
+    TServer(const TSettings &settings);
     ~TServer();
-    void setSettings(QString settingsFile);
+    void setSettings(const TSettings &settings);
     int connectRabbit();
     void disconnectRabbit();
     void consumeAndSendMessage();
