@@ -5,6 +5,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    setLog("settings.ini");
     TInterface w;
     if(w.connectRabbit())
     {

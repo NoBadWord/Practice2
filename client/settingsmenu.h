@@ -18,8 +18,6 @@ class TSettingsMenu : public QWidget
 public:
     explicit TSettingsMenu(QWidget *parent = nullptr);
     ~TSettingsMenu();
-    QString logPath();
-    QString logLvl();
     QString hostname();
     QString routingkey();
     QString exchange();
@@ -33,8 +31,6 @@ private slots:
 private:
     Ui::TSettingsMenu *ui;
     QString m_settingsFile;
-    QString m_logPath;
-    QString m_logLvl;
     QString m_hostname;
     QString m_routingkey;
     QString m_exchange;
@@ -45,5 +41,7 @@ private:
 signals:
     void saveSettingsSignal();
 };
+
+void setLog(QString settingsFile);
 
 #endif // SETTINGSMENU_H
